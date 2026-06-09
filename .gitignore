@@ -1,0 +1,14 @@
+# Runtime libraries are fetched from PyPI at install time — never commit them
+# (the CUDA provider alone is ~400 MB).
+*.so
+*.so.*
+*.whl
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Local staging / backups
+stage/
+*.cpu-backup
