@@ -16,7 +16,14 @@
 #   sudo bash install-deepsnr-gpu.sh   # phase 2: install (root)
 #
 # See README.md for requirements (CUDA 12.x + cuDNN 9.x on PixInsight's path).
+# Needs only python3 + unzip — pip is deliberately NOT used, so PEP 668
+# ("externally managed environment") distros like Debian 12+/Ubuntu 23.04+
+# work without venvs or --break-system-packages.
 set -euo pipefail
+
+# Resolve this script's directory so the fetch helper is found regardless of
+# the caller's CWD (the helper lives in scripts/ next to this installer).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 PI_LIB="${PI_LIB:-/opt/PixInsight/bin/lib}"      # where PI keeps its bundled libs
 STAGE="${STAGE:-/var/tmp/deepsnr-gpu-stage}"     # shared between the two phases
@@ -37,10 +44,10 @@ if [ "$(id -u)" -ne 0 ]; then
 	[ -n "$VER" ] || { echo "ERROR: could not detect ORT version; set ORT_VERSION=x.y.z" >&2; exit 1; }
 	echo "[*] Bundled ONNX Runtime version: $VER"
 	rm -rf "$STAGE"; mkdir -p "$STAGE"
-	echo "[*] Downloading onnxruntime-gpu==$VER from PyPI ..."
-	python3 -m pip download "onnxruntime-gpu==$VER" --no-deps -d "$STAGE" >/dev/null
+	echo "[*] Downloading onnxruntime-gpu==$VER from PyPI (stdlib fetch, no pip) ..."
+	WHEEL="$(python3 "$SCRIPT_DIR/scripts/fetch_ort_wheel.py" "$VER" "$STAGE")"
 	echo "[*] Extracting ..."
-	unzip -o -q "$STAGE"/onnxruntime_gpu-*.whl -d "$STAGE/x"
+	unzip -o -q "$WHEEL" -d "$STAGE/x"
 	[ -e "$STAGE/x/onnxruntime/capi/libonnxruntime_providers_cuda.so" ] \
 		|| { echo "ERROR: CUDA provider not found in wheel" >&2; exit 1; }
 	echo "[*] Staged to $STAGE"
