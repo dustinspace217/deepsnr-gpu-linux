@@ -31,11 +31,18 @@ def main():
 
     # The capi .so files are identical across cp3XX tags (they don't link
     # libpython), so any manylinux x86_64 wheel works; sort for determinism.
+    # Free-threaded ("t"-suffixed ABI, e.g. cp314t) wheels are EXCLUDED: the
+    # standard-build wheel is the canonical artifact, and the exotic variant
+    # also can't be pip-installed by the container-based verification.
+    def is_freethreaded(name):
+        return any(part.endswith("t") and part.startswith("cp")
+                   for part in name.split("-"))
     cands = sorted(
         (u for u in meta["urls"]
          if u["filename"].endswith(".whl")
          and "manylinux" in u["filename"]
-         and "x86_64" in u["filename"]),
+         and "x86_64" in u["filename"]
+         and not is_freethreaded(u["filename"].removesuffix(".whl"))),
         key=lambda u: u["filename"])
     if not cands:
         sys.exit(f"ERROR: no manylinux x86_64 wheel for onnxruntime-gpu {ver}")
