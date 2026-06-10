@@ -59,11 +59,39 @@ with the process console reporting `Backend: ONNX Runtime (CUDA execution provid
 ## Requirements
 
 - PixInsight on Linux x64 with a current **ONNX‑backed** DeepSNR (≥ 1.2.1).
-- An NVIDIA GPU and a driver new enough for your card (Blackwell needs a recent one).
+- An **NVIDIA GPU** and a driver new enough for your card (Blackwell needs a
+  recent one). AMD is out of scope at the vendor level: the signed DeepSNR
+  module registers ONNX Runtime's **CUDA** execution provider specifically, so
+  no drop-in library can route it to ROCm — without an NVIDIA GPU the module
+  keeps running on CPU exactly as shipped.
 - **CUDA 12.x runtime + cuDNN 9.x** reachable on PixInsight's library path (see
   below). *Use CUDA 12.x, not 13.x — ORT 1.26 is built against CUDA 12.*
-- `python3`, `pip`, `unzip`, and `strings` (binutils). `cuobjdump` (from the CUDA
-  toolkit) is needed only for the optional architecture inspection.
+- `python3` and `unzip` — **no pip**: the installer fetches from PyPI with the
+  Python standard library, so PEP 668 "externally managed" distros (Debian 12+,
+  Ubuntu 23.04+) work without venvs. `strings` (binutils) for version
+  auto-detection; `cuobjdump` only for the optional architecture inspection.
+
+### Works across distros
+
+Any x86_64 Linux with **glibc ≥ 2.27** works — the libraries come from the
+official `manylinux`-tagged ONNX Runtime wheel (Debian 10+/13 ✓, Ubuntu
+20.04+ ✓, RHEL/Alma/Rocky 8+ ✓, Fedora ✓, Arch ✓; musl/Alpine ✗). Verified by
+running a real CPU inference of the DeepSNR model inside a **Debian 13**
+container plus a glibc-symbol audit of the exact shipped libraries
+(`scripts/verify-trixie-ort.sh`); GPU end-to-end verified on Fedora 44 +
+RTX 5080. On Debian/Ubuntu, install CUDA 12.x + cuDNN 9 per NVIDIA's official
+instructions (apt installs typically land CUDA under `/usr/local/cuda-12.x`
+and cuDNN in `/usr/lib/x86_64-linux-gnu`); point the `PixInsight.sh` edit at
+whichever directories hold `libcudart.so.12` and `libcudnn.so.9`.
+
+### No python3? Use the release bundle
+
+If you can't run the installer, [Releases](../../releases) carries
+`ort-gpu-1.26.0-linux-x86_64.tar.gz` — the three libraries extracted unmodified
+from the official PyPI wheel (provenance + wheel sha256 inside, MIT license
+included). Verify the bundle's `.sha256`, extract, and copy the three `.so`
+files into `/opt/PixInsight/bin/lib` yourself (back up the originals first, as
+the installer would).
 
 ## Install
 
