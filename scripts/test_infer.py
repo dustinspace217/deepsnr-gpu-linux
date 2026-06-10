@@ -7,7 +7,10 @@ input shaped from the model's own input signature. If an ORT-native kernel has
 no usable image for your GPU, run() raises cudaErrorNoKernelImageForDevice; if
 it returns, the build is usable on your card.
 
-    usage:  python3 test_infer.py /opt/PixInsight/bin/deepsnr/DeepSNR_weights_v2.onnx
+    usage:  python3 test_infer.py /opt/PixInsight/bin/deepsnr/DeepSNR_weights_v2.onnx [cpu]
+
+Pass "cpu" as the second argument to skip the CUDA provider entirely — used by
+the container-based portability verification, where no GPU stack exists.
 
 Run it with the CUDA runtime on the loader path, e.g.:
     LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64 python3 test_infer.py <model.onnx>
@@ -24,11 +27,14 @@ model = sys.argv[1]
 print("ort_version:", ort.__version__)
 print("available_providers:", ort.get_available_providers())
 
+providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+if len(sys.argv) > 2 and sys.argv[2] == "cpu":
+    providers = ["CPUExecutionProvider"]
+
 so = ort.SessionOptions()
 so.log_severity_level = 2  # surface "node placed on CPU" fallbacks
 try:
-    sess = ort.InferenceSession(
-        model, so, providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+    sess = ort.InferenceSession(model, so, providers=providers)
 except Exception as e:
     print("SESSION_CREATE_FAILED:", repr(e))
     traceback.print_exc()
