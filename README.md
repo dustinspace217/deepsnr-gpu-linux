@@ -187,6 +187,14 @@ sudo rm -f libonnxruntime_providers_cuda.so
 - If a future DeepSNR bumps its bundled ORT past 1.26, just re‑run the installer —
   it matches whatever version your module ships.
 
+## RC Astro tools (NoiseXTerminator / StarXTerminator / BlurXTerminator)
+
+Those use **TensorFlow** today, not ONNX, so the libraries here don't accelerate
+them yet. The developer has confirmed a move to **ONNX+CUDA on Linux** in a future
+version — at which point this same install will cover them too. For GPU
+acceleration of the TensorFlow-based RC Astro tools **right now**, see the
+companion project: **[pixinsight-blackwell-tensorflow](https://github.com/dustinspace217/pixinsight-blackwell-tensorflow)**.
+
 ## License
 
 MIT — see [`LICENSE`](LICENSE). ONNX Runtime is © Microsoft (MIT). PixInsight,
