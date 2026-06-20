@@ -11,6 +11,7 @@ Prints the downloaded wheel's path on stdout (the installer captures it).
 """
 import hashlib
 import json
+import os
 import sys
 import urllib.request
 
@@ -48,7 +49,13 @@ def main():
         sys.exit(f"ERROR: no manylinux x86_64 wheel for onnxruntime-gpu {ver}")
     pick = cands[-1]
 
-    out = f"{dest}/{pick['filename']}"
+    # Treat the filename from PyPI metadata as untrusted: strip any directory
+    # components so a crafted/compromised entry can't write outside `dest`
+    # (path traversal). PyPI sanitizes this today; we don't rely on that.
+    fname = os.path.basename(pick["filename"])
+    if not fname.endswith(".whl") or fname.startswith("."):
+        sys.exit(f"ERROR: unexpected wheel filename from PyPI: {pick['filename']!r}")
+    out = os.path.join(dest, fname)
     h = hashlib.sha256()
     written = 0
     with urllib.request.urlopen(pick["url"], timeout=60) as r, open(out, "wb") as f:
