@@ -108,6 +108,23 @@ The script auto‑detects the ORT version baked into your bundled
 provider stay ABI‑matched. It backs up the CPU‑only libraries to `*.cpu-backup`
 before replacing them, and never touches the signed `DeepSNR-pxm.so`.
 
+### Security model
+
+The download's integrity is checked against the **sha256 published by PyPI** for
+that exact file. Note this is *not* independent provenance — the hash arrives over
+the same TLS channel as the file, so it catches corruption and a mirror that
+tampers with the file but not the metadata; it trusts PyPI's TLS and PyPI itself.
+If you want a stronger guarantee, download the bundle from this repo's
+[Releases](../../releases) and check it against the `.sha256` committed here.
+
+The two‑phase split crosses a privilege boundary, so the installer is careful
+about it: phase 1 (unprivileged) stages into a **private, mode‑700 directory it
+owns**, and phase 2 (`sudo`) **refuses to run** unless that directory is owned by
+the user who invoked `sudo` and is not group/ or other‑writable. That prevents
+another local user from pre‑planting a malicious `.so` in a shared temp directory
+for root to install. The root phase installs only the libraries staged from the
+verified wheel — it never touches anything outside `/opt/PixInsight/bin/lib`.
+
 ### Make sure PixInsight can see CUDA
 
 PixInsight's launcher resets `LD_LIBRARY_PATH`, so your CUDA libraries must be
